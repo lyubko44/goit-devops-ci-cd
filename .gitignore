@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Envs
+.env
+.venv/
+venv/
+
+# Django
+staticfiles/
+
+# OS
+.DS_Store
+
+# Docker data
+db_data/
+
+
