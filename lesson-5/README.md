@@ -38,7 +38,7 @@ lesson-5/
 └── README.md                # Ця документація
 ```
 
-## 🚀 Модулі проєкту
+## Модулі проєкту
 
 ### 1️⃣ Модуль S3-Backend
 
@@ -244,25 +244,6 @@ terraform destroy
 
 Введіть `yes` для підтвердження видалення.
 
-## 🔒 Безпека
-
-### Рекомендації:
-
-1. **Ніколи не комітьте** файли `terraform.tfvars` з чутливими даними
-2. **Використовуйте** AWS IAM ролі з мінімальними правами
-3. **Увімкніть** MFA для AWS акаунта
-4. **Регулярно ротуйте** AWS credentials
-5. **Використовуйте** AWS Secrets Manager для чутливих даних
-6. **Перевіряйте** state файли в S3 з увімкненим шифруванням
-
-### .gitignore
-
-Проєкт включає `.gitignore` файл, який виключає:
-- `.terraform/` директорії
-- `*.tfstate` файли
-- `*.tfvars` файли (крім `.example`)
-- Crash logs
-
 ## 📚 Корисні команди
 
 ```bash
@@ -298,17 +279,6 @@ terraform import aws_vpc.main vpc-xxxxx
 aws configure
 ```
 
-### Проблема: "Error: failed to get shared config profile"
-
-**Рішення:** Перевірте файл `~/.aws/credentials` та `~/.aws/config`.
-
-### Проблема: State lock помилка
-
-**Рішення:** Видаліть блокування вручну:
-```bash
-terraform force-unlock <LOCK_ID>
-```
-
 ## 📖 Додаткові матеріали
 
 - [Terraform AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
@@ -325,6 +295,4 @@ terraform force-unlock <LOCK_ID>
 Цей проєкт створений для навчальних цілей.
 
 ---
-
-**Успіхів у вивченні Infrastructure as Code! 🚀**
 

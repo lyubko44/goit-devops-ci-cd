@@ -1,7 +1,13 @@
 variable "aws_region" {
   description = "AWS region for all resources"
   type        = string
-  default     = "us-west-2"
+  default     = "us-west-1"
+}
+
+variable "aws_profile" {
+  description = "AWS CLI profile to use"
+  type        = string
+  default     = "training"
 }
 
 # S3 Backend Variables
@@ -45,7 +51,7 @@ variable "private_subnets" {
 variable "availability_zones" {
   description = "List of availability zones"
   type        = list(string)
-  default     = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  default     = ["us-west-1a", "us-west-1b", "us-west-1c"]
 }
 
 # ECR Variables
