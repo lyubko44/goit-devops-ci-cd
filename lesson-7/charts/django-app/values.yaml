@@ -1,0 +1,59 @@
+image:
+  repository: "<ECR_REPOSITORY_URL>" # e.g., xxxxx.dkr.ecr.eu-central-1.amazonaws.com/goit-devops-lesson-7-django
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+podAnnotations: {}
+podLabels: {}
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+service:
+  type: LoadBalancer
+  port: 80
+
+containerPort: 8000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+env:
+  DJANGO_SETTINGS_MODULE: "app.settings"
+  DJANGO_SECRET_KEY: "REPLACE_ME"
+  DJANGO_DEBUG: "false"
+  # Database example variables (adjust or remove if not used):
+  # DB_HOST: "postgres"
+  # DB_PORT: "5432"
+  # DB_NAME: "app"
+  # DB_USER: "app"
+  # DB_PASSWORD: "password"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+  # targetMemoryUtilizationPercentage: 75
+
+ingress:
+  enabled: false
+  className: "nginx"
+  host: "yourdomain.com"
+  path: /
+  pathType: Prefix
+  tls: false
+  annotations:
+    # Uncomment if using cert-manager:
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+
