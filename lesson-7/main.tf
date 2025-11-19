@@ -128,4 +128,32 @@ module "eks" {
   tags                 = local.tags
 }
 
+module "jenkins" {
+  source = "./modules/jenkins"
+
+  cluster_name         = module.eks.cluster_name
+  cluster_endpoint     = module.eks.cluster_endpoint
+  cluster_ca_certificate = module.eks.cluster_ca_certificate
+  aws_region           = var.aws_region
+  namespace            = "jenkins"
+  helm_chart_version   = "5.0.0"
+  tags                 = local.tags
+
+  depends_on = [module.eks]
+}
+
+module "argo_cd" {
+  source = "./modules/argo_cd"
+
+  cluster_name         = module.eks.cluster_name
+  cluster_endpoint     = module.eks.cluster_endpoint
+  cluster_ca_certificate = module.eks.cluster_ca_certificate
+  aws_region           = var.aws_region
+  namespace            = "argocd"
+  helm_chart_version   = "7.0.0"
+  tags                 = local.tags
+
+  depends_on = [module.eks]
+}
+
 

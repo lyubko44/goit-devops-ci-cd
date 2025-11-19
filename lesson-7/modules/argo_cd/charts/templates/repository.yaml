@@ -1,0 +1,31 @@
+{{- range .Values.repositories }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .name | required "repository name is required" }}
+  namespace: {{ .namespace | default "argocd" }}
+  labels:
+    argocd.argoproj.io/secret-type: repository
+type: Opaque
+stringData:
+  type: {{ .type | default "git" }}
+  url: {{ .url | required "repository url is required" }}
+  {{- if .username }}
+  username: {{ .username }}
+  {{- end }}
+  {{- if .password }}
+  password: {{ .password }}
+  {{- end }}
+  {{- if .sshPrivateKey }}
+  sshPrivateKey: |
+    {{- .sshPrivateKey | nindent 4 }}
+  {{- end }}
+  {{- if .insecure }}
+  insecure: "{{ .insecure }}"
+  {{- end }}
+  {{- if .enableLfs }}
+  enableLfs: "{{ .enableLfs }}"
+  {{- end }}
+{{- end }}
+

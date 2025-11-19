@@ -1,0 +1,62 @@
+# Argo CD Server configuration
+server:
+  service:
+    type: LoadBalancer
+    port: 80
+  ingress:
+    enabled: false
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+  extraArgs:
+    - --insecure
+
+# Controller configuration
+controller:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# Repo Server configuration
+repoServer:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# Application Set Controller configuration
+applicationSetController:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+# Redis configuration
+redis:
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "200m"
+      memory: "256Mi"
+
+# Configs
+configs:
+  params:
+    server.insecure: true
+

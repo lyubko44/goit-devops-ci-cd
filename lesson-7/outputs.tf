@@ -38,4 +38,26 @@ output "eks_oidc_provider_arn" {
   description = "EKS OIDC provider ARN"
 }
 
+output "jenkins_url" {
+  value       = module.jenkins.jenkins_url
+  description = "Jenkins URL"
+}
+
+output "jenkins_admin_password" {
+  value       = module.jenkins.admin_password
+  description = "Jenkins admin password"
+  sensitive   = true
+}
+
+output "argocd_url" {
+  value       = module.argo_cd.argocd_url
+  description = "Argo CD URL"
+}
+
+output "argocd_admin_password" {
+  value       = module.argo_cd.admin_password
+  description = "Argo CD initial admin password"
+  sensitive   = true
+}
+
 

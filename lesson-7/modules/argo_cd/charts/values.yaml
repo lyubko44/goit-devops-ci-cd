@@ -1,0 +1,32 @@
+# Argo CD Applications
+applications:
+  - name: django-app
+    namespace: argocd
+    project: default
+    source:
+      repoURL: "" # Git repository URL with Helm chart
+      path: charts/django-app
+      targetRevision: main
+      helm:
+        valueFiles:
+          - values.yaml
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: default
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true
+
+# Argo CD Repositories
+repositories:
+  - name: "" # Repository name
+    url: "" # Git repository URL
+    type: git
+    # For private repositories, you can add:
+    # username: ""
+    # password: ""
+    # sshPrivateKey: ""
+

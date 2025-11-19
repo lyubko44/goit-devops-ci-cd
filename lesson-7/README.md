@@ -1,6 +1,13 @@
-# Lesson 7: Terraform EKS + ECR + Helm (Django)
+# Lesson 7: Terraform EKS + ECR + Helm + Jenkins + Argo CD (Django)
 
-Цей каталог створює інфраструктуру AWS: VPC, ECR, EKS. Helm-чарт розгортає Django-застосунок з HPA, Service типу LoadBalancer, ConfigMap, а також (опціонально) Ingress + TLS.
+Цей каталог створює повний CI/CD стек на AWS: VPC, ECR, EKS, Jenkins та Argo CD. Helm-чарт розгортає Django-застосунок з HPA, Service типу LoadBalancer, ConfigMap, а також (опціонально) Ingress + TLS.
+
+## Архітектура CI/CD
+
+1. **Jenkins** - автоматизує збірку Docker-образів та публікацію в ECR
+2. **Argo CD** - автоматично синхронізує зміни з Git репозиторію в Kubernetes кластер
+3. **Helm** - керує розгортанням застосунків через чарти
+4. **Terraform** - інфраструктура як код для всіх компонентів
 
 ## Попередні вимоги
 - Встановлені: Terraform, AWS CLI, kubectl, Helm.
@@ -40,6 +47,8 @@ terraform apply -var='create_vpc=true' -auto-approve
 - VPC і підмережі
 - ECR репозиторій (`ecr_repository_url` в outputs)
 - EKS кластер
+- Jenkins (`jenkins_url` та `jenkins_admin_password` в outputs)
+- Argo CD (`argocd_url` та `argocd_admin_password` в outputs)
 
 Оновіть kubeconfig для kubectl:
 ```bash
@@ -119,5 +128,157 @@ ingress:
 
 ## Змінні середовища (ConfigMap)
 Редагуйте секцію `env` у `values.yaml`. Deployment підключає її через `envFrom`.
+
+## 7) Jenkins CI/CD Pipeline
+
+### Доступ до Jenkins
+
+Після розгортання отримайте URL та пароль адміністратора:
+```bash
+JENKINS_URL=$(terraform output -raw jenkins_url)
+JENKINS_PASSWORD=$(terraform output -raw jenkins_admin_password)
+
+echo "Jenkins URL: $JENKINS_URL"
+echo "Admin Password: $JENKINS_PASSWORD"
+```
+
+### Налаштування Jenkins
+
+1. Відкрийте Jenkins URL у браузері
+2. Увійдіть з логіном `admin` та паролем з `terraform output`
+3. Встановіть рекомендовані плагіни
+4. Створіть облікові дані:
+   - **ECR Registry URL**: `terraform output -raw ecr_repository_url | cut -d/ -f1`
+   - **ECR Repository Name**: назва репозиторію з ECR
+   - **Git Repository URL**: URL вашого Git репозиторію з Helm чартами
+   - **Git Credentials**: облікові дані для доступу до Git
+
+5. Створіть Secret для AWS credentials в Kubernetes:
+```bash
+kubectl create secret generic aws-credentials \
+  --from-file=credentials=$HOME/.aws/credentials \
+  --from-file=config=$HOME/.aws/config \
+  -n jenkins
+```
+
+6. Створіть ServiceAccount для Jenkins з правами на ECR:
+```bash
+# Створіть IAM роль та політику для Jenkins (опціонально, якщо використовуєте IRSA)
+```
+
+7. Створіть Pipeline Job:
+   - Тип: Pipeline
+   - Визначення: Pipeline script from SCM
+   - SCM: Git
+   - Repository URL: URL вашого репозиторію з Jenkinsfile
+   - Script Path: Jenkinsfile
+
+### Jenkinsfile
+
+Jenkinsfile автоматично:
+1. Збирає Docker-образ через Kaniko
+2. Публікує образ в ECR з тегом `${BUILD_NUMBER}-${GIT_COMMIT}`
+3. Оновлює `values.yaml` в Git репозиторії з новим тегом
+4. Пушить зміни в main гілку
+
+## 8) Argo CD GitOps
+
+### Доступ до Argo CD
+
+Після розгортання отримайте URL та пароль адміністратора:
+```bash
+ARGOCD_URL=$(terraform output -raw argocd_url)
+ARGOCD_PASSWORD=$(terraform output -raw argocd_admin_password)
+
+echo "Argo CD URL: $ARGOCD_URL"
+echo "Admin Password: $ARGOCD_PASSWORD"
+```
+
+### Налаштування Argo CD Application
+
+1. Відкрийте Argo CD URL у браузері
+2. Увійдіть з логіном `admin` та паролем з `terraform output`
+3. Додайте Git репозиторій:
+   - Settings → Repositories → Connect Repo
+   - Вкажіть URL вашого репозиторію з Helm чартами
+   - Додайте облікові дані якщо потрібно
+
+4. Створіть Application:
+   - New App
+   - Application Name: `django-app`
+   - Project Name: `default`
+   - Sync Policy: Automatic (Auto-Create Namespace, Auto-Prune, Auto-Sync)
+   - Repository URL: ваш Git репозиторій
+   - Path: `lesson-7/charts/django-app`
+   - Cluster URL: `https://kubernetes.default.svc`
+   - Namespace: `default`
+
+Або використайте Helm chart з модуля:
+```bash
+cd lesson-7/modules/argo_cd/charts
+helm upgrade --install argocd-apps . \
+  --set applications[0].source.repoURL=<YOUR_GIT_REPO_URL> \
+  --set applications[0].source.path=charts/django-app \
+  --set applications[0].destination.namespace=default \
+  --namespace argocd
+```
+
+### Автоматична синхронізація
+
+Argo CD автоматично відстежує зміни в Git репозиторії та синхронізує їх у кластер. Коли Jenkins оновлює `values.yaml` з новим тегом образу, Argo CD виявить зміни та оновить Deployment в Kubernetes.
+
+## Структура модулів
+
+### Модуль Jenkins (`modules/jenkins/`)
+- `jenkins.tf` - Helm release для Jenkins
+- `providers.tf` - Kubernetes та Helm провайдери
+- `variables.tf` - Змінні модуля
+- `values.yaml` - Конфігурація Jenkins з Kaniko та Git агентами
+- `outputs.tf` - URL та пароль адміністратора
+
+### Модуль Argo CD (`modules/argo_cd/`)
+- `argo_cd.tf` - Helm release для Argo CD
+- `providers.tf` - Kubernetes та Helm провайдери
+- `variables.tf` - Змінні модуля
+- `values.yaml` - Конфігурація Argo CD
+- `outputs.tf` - URL та пароль адміністратора
+- `charts/` - Helm chart для керування Argo CD Applications та Repositories
+  - `Chart.yaml` - Метадані чарта
+  - `values.yaml` - Список applications та repositories
+  - `templates/application.yaml` - Шаблон для Argo CD Application
+  - `templates/repository.yaml` - Шаблон для Argo CD Repository Secret
+
+## Повний CI/CD процес
+
+1. **Розробник** пушить код у Git репозиторій
+2. **Jenkins** виявляє зміни та запускає pipeline:
+   - Збирає Docker-образ через Kaniko
+   - Публікує образ в ECR з унікальним тегом
+   - Оновлює `values.yaml` в Git з новим тегом
+3. **Argo CD** виявляє зміни в Git:
+   - Отримує новий тег образу з `values.yaml`
+   - Оновлює Deployment в Kubernetes
+   - Синхронізує стан кластера з Git
+
+## Troubleshooting
+
+### Jenkins не може підключитися до ECR
+Перевірте, що ServiceAccount має правильні AWS credentials:
+```bash
+kubectl get secret aws-credentials -n jenkins
+```
+
+### Argo CD не синхронізує зміни
+Перевірте статус Application:
+```bash
+kubectl get applications -n argocd
+argocd app get django-app
+```
+
+### Kaniko не може зібрати образ
+Перевірте логи Jenkins pod:
+```bash
+kubectl logs -n jenkins -l app.kubernetes.io/name=jenkins
+```
 
 
