@@ -71,6 +71,55 @@ variable "existing_private_subnet_ids" {
   default     = []
 }
 
+variable "use_aurora" {
+  description = "Create Aurora Cluster (true) or regular RDS instance (false)"
+  type        = bool
+  default     = false
+}
+
+variable "rds_engine" {
+  description = "Database engine (postgres, mysql, etc.)"
+  type        = string
+  default     = "postgres"
+}
+
+variable "rds_engine_version" {
+  description = "Database engine version"
+  type        = string
+  default     = "15.4"
+}
+
+variable "rds_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "rds_multi_az" {
+  description = "Enable Multi-AZ deployment (for RDS instance)"
+  type        = bool
+  default     = false
+}
+
+variable "rds_db_name" {
+  description = "Database name"
+  type        = string
+  default     = "mydb"
+}
+
+variable "rds_db_username" {
+  description = "Database master username"
+  type        = string
+  default     = "admin"
+}
+
+variable "rds_db_password" {
+  description = "Database master password"
+  type        = string
+  sensitive   = true
+  default     = "ChangeMe123!"
+}
+
 locals {
   name_prefix = "${var.project}-${var.environment}"
   tags = {
@@ -154,6 +203,29 @@ module "argo_cd" {
   tags                 = local.tags
 
   depends_on = [module.eks]
+}
+
+module "rds" {
+  source = "./modules/rds"
+
+  name_prefix = "${local.name_prefix}-rds"
+  vpc_id      = local.selected_vpc_id
+  vpc_cidr    = var.vpc_cidr
+  subnet_ids  = local.selected_private_subnet_ids
+
+  use_aurora      = var.use_aurora
+  engine          = var.rds_engine
+  engine_version  = var.rds_engine_version
+  instance_class  = var.rds_instance_class
+  multi_az        = var.rds_multi_az
+
+  db_name     = var.rds_db_name
+  db_username = var.rds_db_username
+  db_password = var.rds_db_password
+
+  tags = local.tags
+
+  depends_on = [module.vpc]
 }
 
 

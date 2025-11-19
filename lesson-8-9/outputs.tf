@@ -60,4 +60,39 @@ output "argocd_admin_password" {
   sensitive   = true
 }
 
+output "rds_database_endpoint" {
+  value       = module.rds.database_endpoint
+  description = "RDS database endpoint (works for both RDS and Aurora)"
+}
+
+output "rds_database_port" {
+  value       = module.rds.database_port
+  description = "RDS database port"
+}
+
+output "rds_database_name" {
+  value       = module.rds.database_name
+  description = "RDS database name"
+}
+
+output "rds_instance_id" {
+  value       = module.rds.rds_instance_id
+  description = "RDS Instance ID (null if Aurora)"
+}
+
+output "aurora_cluster_id" {
+  value       = module.rds.aurora_cluster_id
+  description = "Aurora Cluster ID (null if regular RDS)"
+}
+
+output "aurora_cluster_endpoint" {
+  value       = module.rds.aurora_cluster_endpoint
+  description = "Aurora Cluster Writer Endpoint (null if regular RDS)"
+}
+
+output "aurora_cluster_reader_endpoint" {
+  value       = module.rds.aurora_cluster_reader_endpoint
+  description = "Aurora Cluster Reader Endpoint (null if regular RDS)"
+}
+
 
