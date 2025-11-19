@@ -1,4 +1,4 @@
-# Lesson 7: Terraform EKS + ECR + Helm + Jenkins + Argo CD (Django)
+# Lesson 8-9: Terraform EKS + ECR + Helm + Jenkins + Argo CD (Django)
 
 Цей каталог створює повний CI/CD стек на AWS: VPC, ECR, EKS, Jenkins та Argo CD. Helm-чарт розгортає Django-застосунок з HPA, Service типу LoadBalancer, ConfigMap, а також (опціонально) Ingress + TLS.
 
@@ -16,7 +16,7 @@
 ## 1) Підготовка бекенду для Terraform state (S3 + DynamoDB)
 Backend описано у `backend.tf`. Замініть значення при потребі:
 - bucket: `goit-devops-tf-state`
-- key: `lesson-7/terraform.tfstate`
+- key: `lesson-8-9/terraform.tfstate`
 - region: `eu-central-1`
 - dynamodb_table: `goit-devops-tf-locks`
 
@@ -24,7 +24,7 @@ Backend описано у `backend.tf`. Замініть значення при
 
 ## 2) Ініціалізація і створення інфраструктури
 ```bash
-cd lesson-7
+cd lesson-8-9
 terraform init
 terraform plan
 terraform apply -auto-approve
@@ -209,13 +209,13 @@ echo "Admin Password: $ARGOCD_PASSWORD"
    - Project Name: `default`
    - Sync Policy: Automatic (Auto-Create Namespace, Auto-Prune, Auto-Sync)
    - Repository URL: ваш Git репозиторій
-   - Path: `lesson-7/charts/django-app`
+   - Path: `lesson-8-9/charts/django-app`
    - Cluster URL: `https://kubernetes.default.svc`
    - Namespace: `default`
 
 Або використайте Helm chart з модуля:
 ```bash
-cd lesson-7/modules/argo_cd/charts
+cd lesson-8-9/modules/argo_cd/charts
 helm upgrade --install argocd-apps . \
   --set applications[0].source.repoURL=<YOUR_GIT_REPO_URL> \
   --set applications[0].source.path=charts/django-app \

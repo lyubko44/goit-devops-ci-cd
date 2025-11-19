@@ -32,7 +32,7 @@ variable "project" {
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "lesson-7"
+  default     = "lesson-8-9"
 }
 
 variable "vpc_cidr" {

@@ -118,11 +118,11 @@ spec:
                                 cd /tmp/helm-repo
                                 
                                 # Update values.yaml with new image tag
-                                sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' lesson-7/charts/django-app/values.yaml
-                                sed -i 's|repository:.*|repository: "${ECR_REGISTRY}/${ECR_REPOSITORY}"|g' lesson-7/charts/django-app/values.yaml
+                                sed -i 's|tag:.*|tag: "${IMAGE_TAG}"|g' lesson-8-9/charts/django-app/values.yaml
+                                sed -i 's|repository:.*|repository: "${ECR_REGISTRY}/${ECR_REPOSITORY}"|g' lesson-8-9/charts/django-app/values.yaml
                                 
                                 # Commit and push changes
-                                git add lesson-7/charts/django-app/values.yaml
+                                git add lesson-8-9/charts/django-app/values.yaml
                                 git commit -m "Update Django app image to ${IMAGE_TAG}" || true
                                 git push https://${GIT_USER}:${GIT_PASS}@${GIT_REPO_URL#https://} main
                             """
