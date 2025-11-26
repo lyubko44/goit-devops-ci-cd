@@ -120,6 +120,13 @@ variable "rds_db_password" {
   default     = "ChangeMe123!"
 }
 
+variable "grafana_admin_password" {
+  description = "Grafana admin password"
+  type        = string
+  sensitive   = true
+  default     = "admin"
+}
+
 locals {
   name_prefix = "${var.project}-${var.environment}"
   tags = {
@@ -226,6 +233,21 @@ module "rds" {
   tags = local.tags
 
   depends_on = [module.vpc]
+}
+
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  cluster_name         = module.eks.cluster_name
+  cluster_endpoint     = module.eks.cluster_endpoint
+  cluster_ca_certificate = module.eks.cluster_ca_certificate
+  aws_region           = var.aws_region
+  namespace            = "monitoring"
+  helm_chart_version   = "55.0.0"
+  grafana_admin_password = var.grafana_admin_password
+  tags                 = local.tags
+
+  depends_on = [module.eks]
 }
 
 

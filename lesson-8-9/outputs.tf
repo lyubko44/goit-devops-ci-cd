@@ -95,4 +95,25 @@ output "aurora_cluster_reader_endpoint" {
   description = "Aurora Cluster Reader Endpoint (null if regular RDS)"
 }
 
+output "prometheus_url" {
+  value       = module.monitoring.prometheus_url
+  description = "Prometheus service URL"
+}
+
+output "grafana_url" {
+  value       = module.monitoring.grafana_url
+  description = "Grafana service URL"
+}
+
+output "grafana_admin_password" {
+  value       = module.monitoring.grafana_admin_password
+  description = "Grafana admin password"
+  sensitive   = true
+}
+
+output "monitoring_namespace" {
+  value       = module.monitoring.namespace
+  description = "Monitoring namespace"
+}
+
 

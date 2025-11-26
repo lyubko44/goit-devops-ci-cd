@@ -46,9 +46,10 @@ terraform apply -var='create_vpc=true' -auto-approve
 Після застосування отримаєте:
 - VPC і підмережі
 - ECR репозиторій (`ecr_repository_url` в outputs)
-- EKS кластер
+- EKS кластер з AWS EBS CSI Driver
 - Jenkins (`jenkins_url` та `jenkins_admin_password` в outputs)
 - Argo CD (`argocd_url` та `argocd_admin_password` в outputs)
+- Prometheus та Grafana (`grafana_url` та `grafana_admin_password` в outputs)
 
 Оновіть kubeconfig для kubectl:
 ```bash
@@ -227,6 +228,71 @@ helm upgrade --install argocd-apps . \
 
 Argo CD автоматично відстежує зміни в Git репозиторії та синхронізує їх у кластер. Коли Jenkins оновлює `values.yaml` з новим тегом образу, Argo CD виявить зміни та оновить Deployment в Kubernetes.
 
+## 9) Моніторинг (Prometheus + Grafana)
+
+### Доступ до Grafana
+
+Після розгортання отримайте URL та пароль адміністратора:
+```bash
+GRAFANA_URL=$(terraform output -raw grafana_url)
+GRAFANA_PASSWORD=$(terraform output -raw grafana_admin_password)
+
+echo "Grafana URL: $GRAFANA_URL"
+echo "Admin Password: $GRAFANA_PASSWORD"
+```
+
+Або використайте port-forward:
+```bash
+kubectl port-forward svc/kube-prometheus-stack-grafana 3000:80 -n monitoring
+```
+
+Потім відкрийте http://localhost:3000 у браузері з логіном `admin` та паролем з `terraform output`.
+
+### Доступ до Prometheus
+
+Використайте port-forward:
+```bash
+kubectl port-forward svc/kube-prometheus-stack-prometheus 9090:9090 -n monitoring
+```
+
+Потім відкрийте http://localhost:9090 у браузері.
+
+### Перевірка метрик
+
+Перевірте стан подів моніторингу:
+```bash
+kubectl get pods -n monitoring
+kubectl get svc -n monitoring
+```
+
+### Grafana Dashboards
+
+Після входу в Grafana ви побачите попередньо налаштовані дашборди:
+- Kubernetes Cluster Monitoring
+- Kubernetes Pods
+- Node Exporter
+
+Ці дашборди автоматично відображають метрики з Prometheus.
+
+### Налаштування ServiceMonitor для Django застосунку
+
+Щоб Prometheus збирав метрики з Django застосунку, створіть ServiceMonitor:
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: django-app
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: django-app
+  endpoints:
+  - port: http
+    path: /metrics
+```
+
 ## Структура модулів
 
 ### Модуль Jenkins (`modules/jenkins/`)
@@ -247,6 +313,19 @@ Argo CD автоматично відстежує зміни в Git репози
   - `values.yaml` - Список applications та repositories
   - `templates/application.yaml` - Шаблон для Argo CD Application
   - `templates/repository.yaml` - Шаблон для Argo CD Repository Secret
+
+### Модуль Моніторингу (`modules/monitoring/`)
+- `monitoring.tf` - Helm release для kube-prometheus-stack
+- `providers.tf` - Kubernetes та Helm провайдери
+- `variables.tf` - Змінні модуля
+- `values.yaml` - Конфігурація Prometheus та Grafana
+- `outputs.tf` - URL та пароль адміністратора Grafana
+
+### Модуль EKS (`modules/eks/`)
+- `eks.tf` - Створення EKS кластера
+- `aws_ebs_csi_driver.tf` - Встановлення AWS EBS CSI Driver addon
+- `variables.tf` - Змінні модуля
+- `outputs.tf` - Виведення інформації про кластер
 
 ## Повний CI/CD процес
 
@@ -279,6 +358,22 @@ argocd app get django-app
 Перевірте логи Jenkins pod:
 ```bash
 kubectl logs -n jenkins -l app.kubernetes.io/name=jenkins
+```
+
+### Prometheus не збирає метрики
+Перевірте стан ServiceMonitor:
+```bash
+kubectl get servicemonitor -A
+kubectl describe servicemonitor <name> -n <namespace>
+```
+
+### Grafana не відображає дані
+Перевірте підключення до Prometheus:
+1. Відкрийте Grafana → Configuration → Data Sources
+2. Перевірте, що Prometheus data source налаштований правильно
+3. Перевірте логи Prometheus:
+```bash
+kubectl logs -n monitoring -l app.kubernetes.io/name=prometheus
 ```
 
 
